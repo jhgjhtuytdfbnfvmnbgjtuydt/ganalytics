@@ -2,11 +2,20 @@
 % Please edit documentation in R/all-generics.R
 \name{GaStartsWith}
 \alias{GaStartsWith}
-\title{GaStartsWith}
+\title{GaStartsWith.}
 \usage{
-GaStartsWith(.Object, ...)
+GaStartsWith(object, ...)
+}
+\arguments{
+\item{object}{An expression that should be at the start of a sequence
+expression.}
+
+\item{...}{Any other expressions that should follow the first expression.}
 }
 \description{
 Create a gaSequenceStep object
+}
+\seealso{
+GaSequenceCondition
 }
 

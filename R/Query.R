@@ -6,9 +6,11 @@
 #' @include ganalytics-package.R
 NULL
 
-#' GaQuery
+#' GaQuery.
+#'
 #' Create a ganalytics query object
-#' @param viewId profile id to use
+#'
+#' @param view view id to use
 #' @param creds authentication credentials object created using GoogleApiCreds()
 #' @param startDate start date
 #' @param endDate end date
@@ -19,7 +21,9 @@ NULL
 #' @param segment a segment object
 #' @param samplingLevel either "DEFAULT", "HIGHER_PRECISION" or "FASTER"
 #' @param maxResults the maximum number of results to return,
+#' @param profileId Deprecated, use view instead.
 #'  up to 1,000,000
+#'
 #' @export
 GaQuery <- function(
   view = NA,
@@ -35,8 +39,8 @@ GaQuery <- function(
   maxResults = kGaMaxResults,
   profileId = NA
 ) {
-  if(missing(profileId)) {
-    if(missing(view)) {
+  if (missing(profileId)) {
+    if (is.na(view[[1]])) {
       view <- GaAccounts(creds = creds)$entities[[1]]
     }
   } else view <- profileId
@@ -61,6 +65,22 @@ GaQuery <- function(
   )
 }
 
+#' McfQuery.
+#'
+#' Create a Multi-Channel Funnel Reporting API query object
+#'
+#' @param view view id to use
+#' @param creds authentication credentials object created using GoogleApiCreds()
+#' @param startDate start date
+#' @param endDate end date
+#' @param metrics character vector of metrics
+#' @param dimensions character vector of dimensions
+#' @param sortBy a sort by object
+#' @param filters a filters object
+#' @param samplingLevel either "DEFAULT", "HIGHER_PRECISION" or "FASTER"
+#' @param maxResults the maximum number of results to return,
+#'  up to 1,000,000
+#'
 #' @export
 McfQuery <- function(
   view = NA,
@@ -74,7 +94,7 @@ McfQuery <- function(
   samplingLevel = "DEFAULT",
   maxResults = kGaMaxResults
 ) {
-  if(missing(view)) {
+  if(is.na(view[[1]])) {
     view <- GaAccounts(creds = creds)$entities[[1]]
   }
   if (missing(creds) & is(view, ".gaResource")) {
@@ -96,6 +116,19 @@ McfQuery <- function(
   )
 }
 
+#' RtQuery.
+#'
+#' Create a Real-Time reporting API query object
+#'
+#' @param view view id to use
+#' @param creds authentication credentials object created using GoogleApiCreds()
+#' @param metrics character vector of metrics
+#' @param dimensions character vector of dimensions
+#' @param sortBy a sort by object
+#' @param filters a filters object
+#' @param maxResults the maximum number of results to return,
+#'  up to 1,000,000
+#'
 #' @export
 RtQuery <- function(
   view = NA,
@@ -106,7 +139,7 @@ RtQuery <- function(
   filters = NULL,
   maxResults = kGaMaxResults
 ) {
-  if(missing(view)) {
+  if(is.na(view[[1]])) {
     view <- GaAccounts(creds = creds)$entities[[1]]
   }
   if (missing(creds) & is(view, ".gaResource")) {
@@ -175,58 +208,70 @@ modify_query <- function(
   # creds
 }
 
+#' @describeIn MaxResults
 setMethod(
   f = "MaxResults",
   signature = ".query",
-  definition = function(.Object) {
-    .Object@maxResults
+  definition = function(object) {
+    object@maxResults
   }
 )
 
+#' @describeIn MaxResults
 setMethod(
   f = "MaxResults<-",
   signature = c(".query", "ANY"),
-  definition = function(.Object, value) {
-    .Object@maxResults <- as.numeric(value)
-    validObject(.Object)
-    .Object
+  definition = function(object, value) {
+    object@maxResults <- as.numeric(value)
+    validObject(object)
+    object
   }
 )
 
+#' @describeIn SamplingLevel
 setMethod(
   f = "SamplingLevel",
   signature = ".standardQuery",
-  definition = function(.Object) {
-    .Object@samplingLevel
+  definition = function(object) {
+    object@samplingLevel
   }
 )
 
+#' @describeIn SamplingLevel
 setMethod(
   f = "SamplingLevel<-",
   signature = c(".standardQuery", "ANY"),
-  definition = function(.Object, value) {
-    .Object@samplingLevel <- as.character(value)
-    validObject(.Object)
-    .Object
+  definition = function(object, value) {
+    object@samplingLevel <- as.character(value)
+    validObject(object)
+    object
   }
 )
 
+#' @describeIn SamplingLevel
 setMethod(
   f = "SamplingLevel",
   signature = "data.frame",
-  definition = function(.Object) {
-    sample_params <- attributes(.Object)[c("sampleSize", "sampleSpace")]
+  definition = function(object) {
+    sample_params <- attributes(object)[c("sampleSize", "sampleSpace")]
     sample_params$sampleRate <- sample_params$sampleSize / sample_params$sampleSpace
     sample_params
   }
 )
 
 # Backwards compatibility
-#'@export GaSamplingLevel
+#' @export GaSamplingLevel
+#' @rdname SamplingLevel
 GaSamplingLevel <- SamplingLevel
-#'@export GaSamplingLevel<-
+
+#' @export GaSamplingLevel<-
+#' @rdname SamplingLevel
 `GaSamplingLevel<-` <- `SamplingLevel<-`
-#'@export GaMaxResults
+
+#' @export GaMaxResults
+#' @rdname MaxResults
 GaMaxResults <- MaxResults
-#'@export GaMaxResults<-
+
+#' @export GaMaxResults<-
+#' @rdname MaxResults
 `GaMaxResults<-` <- `MaxResults<-`

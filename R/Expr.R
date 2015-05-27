@@ -9,28 +9,31 @@
 #' @include helper-functions.R
 NULL
 
-setMethod("Expr", ".expr", function(.Object) {.Object})
+#' @describeIn Expr
+setMethod("Expr", ".expr", function(object) {object})
 
+#' @describeIn Expr
 setMethod(
   f = "Expr",
   signature = c("character", "character", "ANY"),
-  definition = function(.Object, operator, operand, metricScope) {
-    var <- Var(.Object)
+  definition = function(object, operator, operand, metricScope) {
+    var <- Var(object)
     if (is(var, ".gaVar")) {
-      GaExpr(.Object, operator, operand, metricScope)
+      GaExpr(object, operator, operand, metricScope)
     } else if (is(var, ".mcfVar")) {
-      McfExpr(.Object, operator, operand)
+      McfExpr(object, operator, operand)
     } else if (is(var, ".rtVar")) {
-      RtExpr(.Object, operator, operand)
+      RtExpr(object, operator, operand)
     } else stop("Variable type not recognised for expressions.")
   }
 )
 
+#' @describeIn GaExpr
 setMethod(
   f = "GaExpr",
   signature = c("character", "character", "ANY"),
-  definition = function(.Object, operator, operand, metricScope) {
-    var <- GaVar(.Object)
+  definition = function(object, operator, operand, metricScope) {
+    var <- GaVar(object)
     if (class(var) == "gaDimVar") {
       operator <- as(operator, "gaDimOperator")
       operand <- as(operand, "gaDimOperand")
@@ -58,11 +61,12 @@ setMethod(
   }
 )
 
+#' @describeIn McfExpr
 setMethod(
   f = "McfExpr",
   signature = c("character", "character", "ANY"),
-  definition = function(.Object, operator, operand) {
-    var <- McfVar(.Object)
+  definition = function(object, operator, operand) {
+    var <- McfVar(object)
     if (class(var) == "mcfDimVar") {
       operator <- as(operator, "mcfDimOperator")
       operand <- as(operand, "mcfDimOperand")
@@ -79,11 +83,12 @@ setMethod(
   }
 )
 
+#' @describeIn RtExpr
 setMethod(
   f = "RtExpr",
   signature = c("character", "character", "ANY"),
-  definition = function(.Object, operator, operand) {
-    var <- RtVar(.Object)
+  definition = function(object, operator, operand) {
+    var <- RtVar(object)
     if (class(var) == "rtDimVar") {
       operator <- as(operator, "rtDimOperator")
       operand <- as(operand, "rtDimOperand")
@@ -102,44 +107,49 @@ setMethod(
 
 # ---- GaScopeLevel, GaScopeLevel<- ----
 
-setMethod("GaScopeLevel", "gaSegMetExpr", function(.Object) {.Object@metricScope})
+#' @describeIn GaScopeLevel
+setMethod("GaScopeLevel", "gaSegMetExpr", function(object) {object@metricScope})
 
+#' @describeIn GaScopeLevel
 setMethod(
   f = "GaScopeLevel<-",
   signature = c("gaSegMetExpr", "character"),
-  definition = function(.Object, value) {
-    .Object@metricScope <- value
-    validObject(.Object)
-    .Object
+  definition = function(object, value) {
+    object@metricScope <- value
+    validObject(object)
+    object
   }
 )
 
+#' @describeIn GaScopeLevel
 setMethod(
   f = "GaScopeLevel<-",
   signature = c("gaMetExpr", "character"),
-  definition = function(.Object, value) {
-    .Object <- as(.Object, "gaSegMetScope")
-    .Object@metricScope <- value
-    validObject(.Object)
-    .Object
+  definition = function(object, value) {
+    object <- as(object, "gaSegMetScope")
+    object@metricScope <- value
+    validObject(object)
+    object
   }
 )
 
+#' @describeIn GaScopeLevel
 setMethod(
   f = "GaScopeLevel",
   signature = "gaSegmentCondition",
-  definition = function(.Object) {
-    .Object@conditionScope
+  definition = function(object) {
+    object@conditionScope
   }
 )
 
+#' @describeIn GaScopeLevel
 setMethod(
   f = "GaScopeLevel<-",
   signature = c("gaSegmentCondition", "character"),
-  definition = function(.Object, value) {
-    .Object@conditionScope <- value
-    validObject(.Object)
-    .Object
+  definition = function(object, value) {
+    object@conditionScope <- value
+    validObject(object)
+    object
   }
 )
 

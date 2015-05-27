@@ -2,11 +2,20 @@
 % Please edit documentation in R/all-generics.R
 \name{GaPrecedes}
 \alias{GaPrecedes}
-\title{GaPrecedes}
+\title{GaPrecedes.}
 \usage{
-GaPrecedes(.Object, ...)
+GaPrecedes(object, ...)
+}
+\arguments{
+\item{object}{The expression that should preceed others in the sequence.}
+
+\item{...}{Any other expressions that should follow the first one but before
+  any others in the sequence.}
 }
 \description{
 Create a gaSequenceStep object
+}
+\seealso{
+GaSequenceCondition
 }
 

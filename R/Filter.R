@@ -5,36 +5,46 @@
 #' @include helper-functions.R
 NULL
 
-setMethod("TableFilter", ".query", function(.Object) {as(.Object, ".tableFilter")})
+#' @describeIn TableFilter
+setMethod("TableFilter", ".query", function(object) {as(object, ".tableFilter")})
 
-setMethod("TableFilter", "NULL", function(.Object) {as(.Object, ".tableFilter")})
+#' @describeIn TableFilter
+setMethod("TableFilter", "NULL", function(object) {as(object, ".tableFilter")})
 
-setMethod("TableFilter", ".tableFilter", function(.Object) {.Object})
+#' @describeIn TableFilter
+setMethod("TableFilter", ".tableFilter", function(object) {object})
 
-setMethod("TableFilter", ".compoundExpr", function(.Object) {as(.Object, ".tableFilter")})
+#' @describeIn TableFilter
+setMethod("TableFilter", ".compoundExpr", function(object) {as(object, ".tableFilter")})
 
-setMethod("TableFilter", "gaDynSegment", function(.Object) {as(.Object, ".tableFilter")})
+#' @describeIn TableFilter
+setMethod("TableFilter", "gaDynSegment", function(object) {as(object, ".tableFilter")})
 
+#' @describeIn TableFilter
 setMethod(
   f = "TableFilter<-",
   signature = c(".tableFilter", "andExpr"),
-  definition = function(.Object, value) {
-    as(.Object, "andExpr") <- value
-    .Object
+  definition = function(object, value) {
+    as(object, "andExpr") <- value
+    object
   }
 )
 
+#' @describeIn TableFilter
 setMethod(
   f = "TableFilter<-",
   signature = c(".query", "ANY"),
-  definition = function(.Object, value) {
-    as(.Object, ".tableFilter") <- value
-    .Object
+  definition = function(object, value) {
+    as(object, ".tableFilter") <- value
+    object
   }
 )
 
 # Backwards compatibility
 #' @export GaFilter
+#' @rdname TableFilter
 GaFilter <- TableFilter
+
 #' @export GaFilter<-
+#' @rdname TableFilter
 `GaFilter<-` <- `TableFilter<-`

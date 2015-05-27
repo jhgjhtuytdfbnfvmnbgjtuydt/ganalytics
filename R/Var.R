@@ -7,185 +7,232 @@
 #' @include meta.R
 NULL
 
-# ---- GaVar ----
-
+#' @describeIn Var Coerce a character to '.var'.
 setMethod(
   f = "Var",
   signature = "character",
-  definition = function(.Object) {
-    as(.Object, ".var", strict = FALSE)
+  definition = function(object) {
+    as(object, ".var", strict = FALSE)
   }
 )
 
+#' @describeIn Var Set a '.var' object to a new value coerced from character.
 setMethod(
   f = "Var<-",
   signature = c(".var", "character"),
-  definition = function(.Object, value) {
-    as(.Object, "character") <- value
-    .Object
+  definition = function(object, value) {
+    as(object, "character") <- value
+    object
   }
 )
 
-setMethod("Var", ".expr", function(.Object) {as(.Object, ".var")})
+#' @describeIn Var Get the variable of an expression object.
+setMethod("Var", ".expr", function(object) {as(object, ".var")})
 
+#' @describeIn Var Set the variable of an expression object using a character value to be coerced to '.var'.
 setMethod(
   f = "Var<-",
   signature = c(".expr", "character"),
-  definition = function(.Object, value) {
-    as(.Object, ".var") <- value
-    .Object
+  definition = function(object, value) {
+    as(object, ".var") <- value
+    object
   }
 )
 
-setMethod("Var", ".gaVarList", function(.Object) {.Object})
+#' @describeIn Var Get the variables within a variable list object, such as sortBy, dimensions or metrics.
+setMethod("Var", ".gaVarList", function(object) {object})
 
-## Create a gaMet or gaDim object
-## GaVar takes a GA variable and determines whether to return a Dimension or Metric object
-setMethod("GaVar", "character", function(.Object) {as(.Object, ".gaVar")})
+# Create a gaMet or gaDim object.
 
+#' @describeIn Var GaVar takes a GA variable name and determines whether to return a Dimension or Metric object
+setMethod("GaVar", "character", function(object) {as(object, ".gaVar")})
+
+#' @describeIn Var
 setMethod(
   f = "GaVar<-",
   signature = c(".gaVar", "character"),
-  definition = function(.Object, value) {
-    as(.Object, "character") <- value
-    .Object
+  definition = function(object, value) {
+    as(object, "character") <- value
+    object
   }
 )
 
-setMethod("GaVar", ".expr", function(.Object) {as(.Object, ".gaVar")})
+#' @describeIn Var Get the variable from expression object coerced to '.garVar'.
+setMethod("GaVar", ".expr", function(object) {as(object, ".gaVar")})
 
+#' @describeIn Var Set the variable of an expression to a .gaVar as named by a character value.
 setMethod(
   f = "GaVar<-",
   signature = c(".expr", "character"),
-  definition = function(.Object, value) {
-    as(.Object, ".gaVar") <- value
-    .Object
+  definition = function(object, value) {
+    as(object, ".gaVar") <- value
+    object
   }
 )
 
-setMethod("GaVar", ".gaVarList", function(.Object) {.Object})
+#' @describeIn Var Get the variables of a .gaVarList.
+setMethod("GaVar", ".gaVarList", function(object) {object})
 
 # ---- McfVar ----
 
-setMethod("McfVar", ".mcfVar", function(.Object) {.Object})
+#' @describeIn Var Get the value of a .mcfVar object.
+setMethod("McfVar", ".mcfVar", function(object) {object})
 
-## Create a mcfMet or mcfDim object
-## McfVar takes a MCF variable and determines whether to return a Dimension or Metric object
-setMethod("McfVar", "character", function(.Object) {as(.Object, ".mcfVar")})
+# Create a mcfMet or mcfDim object
+
+#' @describeIn Var McfVar takes a MCF variable and determines whether to return a Dimension or Metric object
+setMethod("McfVar", "character", function(object) {as(object, ".mcfVar")})
 
 # ---- RtVar ----
 
-setMethod("RtVar", ".rtVar", function(.Object) {.Object})
+#' @describeIn Var Get the value of a .rtVar object.
+setMethod("RtVar", ".rtVar", function(object) {object})
 
-## Create a rtMet or rtDim object
-## McfVar takes a RT variable and determines whether to return a Dimension or Metric object
-setMethod("RtVar", "character", function(.Object) {as(.Object, ".rtVar")})
+# Create a rtMet or rtDim object
+
+#' @describeIn Var McfVar takes a RT variable and determines whether to return a Dimension or Metric object
+setMethod("RtVar", "character", function(object) {as(object, ".rtVar")})
 
 # -- GaMetrics ----
 
+#' @describeIn Metrics Return an empty .metrics object
 setMethod(
   f = "Metrics",
   signature = "NULL",
-  definition = function(.Object, ...) {
-    vars <- ArgList(.Object, ...)
+  definition = function(object, ...) {
+    vars <- ArgList(object, ...)
     as(vars, ".metrics")
   }
 )
 
+#' @describeIn Metrics Return the value of a .metrics object or concatenated .metrics objects
 setMethod(
   f = "Metrics",
   signature = ".metrics",
-  definition = function(.Object, ...) {
-    vars <- ArgList(.Object, ...)
+  definition = function(object, ...) {
+    vars <- ArgList(object, ...)
     as(vars, ".metrics")
   }
 )
 
+#' @describeIn Metrics Coerce one or more supplied character values to .metrics.
 setMethod(
   f = "Metrics",
   signature = "character",
-  definition = function(.Object, ...) {
-    vars <- ArgList(.Object, ...)
+  definition = function(object, ...) {
+    vars <- ArgList(object, ...)
     as(vars, ".metrics")
   }
 )
 
+#' @describeIn Metrics Coerce one or more supplied lists to .metrics
 setMethod(
   f = "Metrics",
   signature = "list",
-  definition = function(.Object, ...) {
-    vars <- ArgList(.Object, ...)
+  definition = function(object, ...) {
+    vars <- ArgList(object, ...)
     as(vars, ".metrics")
   }
 )
 
-setMethod("Metrics", ".query", function(.Object) {as(.Object, ".metrics")})
+#' @describeIn Metrics Get the list of metrics for a '.query'.
+setMethod("Metrics", ".query", function(object) {as(object, ".metrics")})
 
+#' @describeIn Metrics Set the metrics for a '.query' object.
 setMethod(
   f = "Metrics<-",
   signature = c(".query", "ANY"),
-  definition = function(.Object, value) {
-    as(.Object, ".metrics") <- value
-    .Object
+  definition = function(object, value) {
+    as(object, ".metrics") <- value
+    object
   }
 )
 
-# -- GaDimensions ----
+# -- Dimensions ----
 
+#' @describeIn Dimensions
+#' @export
 setMethod(
   f = "Dimensions",
   signature = "NULL",
-  definition = function(.Object, ...) {
-    vars <- ArgList(.Object, ...)
+  definition = function(object, ...) {
+    vars <- ArgList(object, ...)
     as(vars, ".dimensions")
   }
 )
 
+#' @describeIn Dimensions
+#' @export
 setMethod(
   f = "Dimensions",
   signature = ".dimensions",
-  definition = function(.Object, ...) {
-    vars <- ArgList(.Object, ...)
+  definition = function(object, ...) {
+    vars <- ArgList(object, ...)
     as(vars, ".dimensions")
   }
 )
 
+#' @describeIn Dimensions
+#' @export
 setMethod(
   f = "Dimensions",
   signature = "character",
-  definition = function(.Object, ...) {
-    vars <- ArgList(.Object, ...)
+  definition = function(object, ...) {
+    vars <- ArgList(object, ...)
     as(vars, ".dimensions")
   }
 )
 
+#' @describeIn Dimensions
+#' @export
 setMethod(
   f = "Dimensions",
   signature = "list",
-  definition = function(.Object, ...) {
-    vars <- ArgList(.Object, ...)
+  definition = function(object, ...) {
+    vars <- ArgList(object, ...)
     as(vars, ".dimensions")
   }
 )
 
-setMethod("Dimensions", ".query", function(.Object) {as(.Object, ".dimensions")})
+#' @describeIn Dimensions
+#' @export
+setMethod("Dimensions", ".query", function(object) {as(object, ".dimensions")})
 
+#' @describeIn Dimensions
+#' @export
 setMethod(
   f = "Dimensions<-",
   signature = c(".query", "ANY"),
-  definition = function(.Object, value) {
-    as(.Object, ".dimensions") <- value
-    .Object
+  definition = function(object, value) {
+    as(object, ".dimensions") <- value
+    object
   }
 )
 
-# Backwards compatibility
-#'@export GaDimensions
-GaDimensions <- Dimensions
-#'@export GaMetrics
-GaMetrics <- Metrics
-#'@export GaDimensions<-
-`GaDimensions<-` <- `Dimensions<-`
-#'@export GaMetrics<-
-`GaMetrics<-` <- `Metrics<-`
+#' GaDimensions (Deprecated).
+#'
+#' Use \code{Dimensions} instead of \code{GaDimensions}
+#' @rdname GaDimensions
+#' @param ... arguments passed onto \code{Dimensions}
+#' @export GaDimensions
+GaDimensions <- function(...){Dimensions(...)}
 
+#' GaMetrics (Deprecated).
+#'
+#' Use \code{Metrics} instead of \code{GaMetrics}
+#' @rdname GaMetrics
+#' @param ... arguments passed onto \code{Metrics}
+#' @export GaMetrics
+GaMetrics <- function(...){Metrics(...)}
+
+#' Use \code{Dimensions<-} instead of \code{GaDimensions<-}
+#' @rdname GaDimensions
+#' @param value passed onto \code{Dimensions}
+#' @export GaDimensions<-
+`GaDimensions<-` <- function(..., value){`Dimensions<-`(..., value)}
+
+#' Use \code{Metrics<-} instead of \code{GaMetrics<-}
+#' @rdname GaMetrics
+#' @param value passed onto \code{Metrics}
+#' @export GaMetrics<-
+`GaMetrics<-` <- function(..., value){`Metrics<-`(..., value)}

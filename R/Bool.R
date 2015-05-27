@@ -7,12 +7,13 @@ NULL
 
 # ---- Not ----
 
+#' @describeIn Not
 setMethod(
   f = "Not",
   signature = ".operator",
-  definition = function(.Object) {
-    as(.Object, "character") <- switch(
-      .Object,
+  definition = function(object) {
+    as(object, "character") <- switch(
+      object,
       "==" = "!=",
       "!=" = "==",
       "<"  = ">=",
@@ -23,48 +24,56 @@ setMethod(
       "=~" = "!~",
       "=@" = "!@",
       "!@" = "=@",
-      stop(paste(.Object, "cannot be NOTed."))
+      stop(paste(object, "cannot be NOTed."))
     )
-    .Object
+    object
   }
 )
 
+#' @describeIn Not
+#' @param x the object to return the logical inverse of.
 #' @export
 setMethod("!", ".operator", function(x) {Not(x)})
 
+#' @describeIn Not
 setMethod(
   f = "Not",
   signature = ".expr",
-  definition = function(.Object) {
-    operator <- as(.Object, ".operator")
-    as(.Object, ".operator") <- Not(operator)
-    .Object
+  definition = function(object) {
+    operator <- as(object, ".operator")
+    as(object, ".operator") <- Not(operator)
+    object
   }
 )
 
+#' @describeIn Not
 #' @export
 setMethod("!", ".expr", function(x) {Not(x)})
 
+#' @describeIn Not
 setMethod(
   f = "Not",
   signature = "orExpr",
-  definition = function(.Object) {
-    do.call(And, lapply(.Object, Not))
+  definition = function(object) {
+    do.call(And, lapply(object, Not))
   }
 )
 
+#' @describeIn Not
 #' @export
 setMethod("!", "orExpr", function(x) {Not(x)})
 
+#' @describeIn Not
 setMethod(
   f = "Not",
   signature = ".gaSimpleOrSequence",
-  definition = function(.Object) {
-    .Object@negation <- !.Object@negation
-    .Object
+  definition = function(object) {
+    object@negation <- !object@negation
+    object
   }
 )
 
+#' @describeIn Not
 #' @export
 setMethod("!", ".gaSimpleOrSequence", function(x) {Not(x)})
 
@@ -73,11 +82,12 @@ setMethod("!", ".gaSimpleOrSequence", function(x) {Not(x)})
 # as separate arguments or as a list.
 # Returns an object of gaOr.
 
+#' @describeIn Or
 setMethod(
   f = "Or",
   signature = ".compoundExpr",
-  definition = function(.Object, ...) {
-    exprList <- list(.Object, ...)
+  definition = function(object, ...) {
+    exprList <- list(object, ...)
     exprList <- lapply(
       X = exprList,
       FUN = function(expr) {
@@ -91,18 +101,22 @@ setMethod(
       }
     )
     exprList <- unlist(exprList, recursive = FALSE)
-    new("orExpr", exprList)    
+    new("orExpr", exprList)
   }
 )
 
+#' @describeIn Or
+#' @param e1 first expression
+#' @param e2 second expression
 #' @export
 setMethod("|", c(".compoundExpr", ".compoundExpr"), function(e1, e2) {Or(e1, e2)})
 
+#' @describeIn And
 setMethod(
   f = "And",
   signature = ".compoundExpr",
-  definition = function(.Object, ...) {
-    exprList <- list(.Object, ...)
+  definition = function(object, ...) {
+    exprList <- list(object, ...)
     exprList <- lapply(
       X = exprList,
       FUN = function(expr) {
@@ -126,13 +140,32 @@ setMethod(
   }
 )
 
+#' @describeIn And
+#' @param e1 first expression
+#' @param e2 second expression
 #' @export
 setMethod("&", c(".compoundExpr", ".compoundExpr"), function(e1, e2) {And(e1, e2)})
 
+#' @describeIn xor
+#' @export
+setMethod("xor", c(".compoundExpr", ".compoundExpr"), function(x, y) {(x | y) & (!x | !y)})
+
 # Backwards compatibility
-#'@export GaNot
-GaNot <- Not
+#' GaNot (Deprecated, use Not or ! instead).
+#'
+#' @export GaNot
+#' @param ... arguments passed to \code{Not}
+#' @rdname GaNot
+GaNot <- function(...){Not(...)}
+
+#' GaOr (Deprecated, use Or or | instead).
 #' @export GaOr
-GaOr <- Or
+#' @param ... arguments passed to \code{Or}
+#' @rdname GaOr
+GaOr <- function(...){Or(...)}
+
+#' GaAnd (Deprecated, use And or & instead).
 #' @export GaAnd
-GaAnd <- And
+#' @param ... arguments passed to \code{And}
+#' @rdname GaAnd
+GaAnd <- function(...){And(...)}

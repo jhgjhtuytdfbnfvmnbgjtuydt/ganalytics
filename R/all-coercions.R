@@ -16,6 +16,8 @@ simpleCoerceData <- function(from, to) {new(to, from@.Data)}
 simpleCoerceToNumeric <- function(from, to) {new(to, as.numeric(from))}
 simpleCoerceToList <- function(from, to) {new(to, list(from))}
 coerceViaList <- function(from, to) {as(as.list(from), to)}
+coerceViaChar <- function(from, to){as(as(from, "character"), to)}
+coerceViaAnd <- function(from, to) {as(as(from, "andExpr"), to)}
 simpleReplace <- function(from, value) {initialize(from, value)}
 coerceLogicalOperand <- function(from, to){
   operand <- ifelse(from, yes = "Yes", no = "No")
@@ -131,29 +133,28 @@ setAs(from = "character", to = "mcfMetVar", def = simpleCoerce)
 setAs(from = "character", to = "rtDimVar", def = simpleCoerce)
 setAs(from = "character", to = "rtMetVar", def = simpleCoerce)
 
-setAs(from = ".mcfVar", to = ".gaVar", def = function(from, to) {
-  as(sub("mcf:", "ga:", from), to)
-})
+coerceVarNS <- function(from, to) {
+  fromClass <- class(from)
+  toClass <- to
+  if(extends(fromClass, ".gaVar")) fromNS <- "ga"
+  if(extends(toClass, ".gaVar")) toNS <- "ga"
+  if(extends(fromClass, ".mcfVar")) fromNS <- "mcf"
+  if(extends(toClass, ".mcfVar")) toNS <- "mcf"
+  if(extends(fromClass, ".rtVar")) fromNS <- "rt"
+  if(extends(toClass, ".rtVar")) toNS <- "rt"
+  fromNS <- paste0(fromNS, ":")
+  toNS <- paste0(toNS, ":")
+  as(as(sub(fromNS, toNS, from), "character"), to)
+}
 
-setAs(from = ".rtVar", to = ".gaVar", def = function(from, to) {
-  as(sub("rt:", "ga:", from), to)
-})
+setAs(from = ".mcfVar", to = ".gaVar", def = coerceVarNS)
+setAs(from = ".rtVar", to = ".gaVar", def = coerceVarNS)
+setAs(from = ".gaVar", to = ".mcfVar", def = coerceVarNS)
+setAs(from = ".rtVar", to = ".mcfVar", def = coerceVarNS)
+setAs(from = ".gaVar", to = ".rtVar", def = coerceVarNS)
+setAs(from = ".mcfVar", to = ".rtVar", def = coerceVarNS)
 
-setAs(from = ".gaVar", to = ".mcfVar", def = function(from, to) {
-  as(sub("ga:", "mcf:", from), to)
-})
-
-setAs(from = ".rtVar", to = ".mcfVar", def = function(from, to) {
-  as(sub("rt:", "mcf:", from), to)
-})
-
-setAs(from = ".gaVar", to = ".rtVar", def = function(from, to) {
-  as(sub("ga:", "rt:", from), to)
-})
-
-setAs(from = ".mcfVar", to = ".rtVar", def = function(from, to) {
-  as(sub("mcf:", "rt:", from), to)
-})
+#############\/ Transform to method of Var and Var<- generic functions
 
 setAs(from = ".expr", to = ".var",
   def = function(from, to) {
@@ -163,6 +164,8 @@ setAs(from = ".expr", to = ".var",
     Expr(value, from@operator, from@operand)
   }
 )
+
+#############\/ Is this used or needed?
 
 setAs(from = ".expr", to = ".gaVar",
   def = function(from, to) {
@@ -182,6 +185,8 @@ setAs(from = "character", to = "mcfMetOperator", def = simpleCoerce)
 setAs(from = "character", to = "rtDimOperator", def = simpleCoerce)
 setAs(from = "character", to = "rtMetOperator", def = simpleCoerce)
 
+#############\/ Transform to method of Operator and Operator<- generic functions
+
 setAs(from = ".expr", to = ".operator",
   def = function(from, to) {
     from@operator
@@ -195,23 +200,17 @@ setAs(from = ".expr", to = ".operator",
 
 # Coercing to .operand subclasses
 setAs(from = "character", to = "gaDimOperand", def = simpleCoerce)
-setAs(from = "numeric", to = "gaDimOperand", def = function(from, to){
-  as(as(from, "character"), to)
-})
+setAs(from = "numeric", to = "gaDimOperand", def = coerceViaChar)
 setAs(from = "logical", to = "gaDimOperand", def = coerceLogicalOperand)
 setAs(from = "numeric", to = "gaMetOperand", def = simpleCoerce)
 setAs(from = "character", to = "gaMetOperand", def = simpleCoerceToNumeric)
 setAs(from = "character", to = "mcfDimOperand", def = simpleCoerce)
-setAs(from = "numeric", to = "mcfDimOperand", def = function(from, to){
-  as(as(from, "character"), to)
-})
+setAs(from = "numeric", to = "mcfDimOperand", def = coerceViaChar)
 setAs(from = "logical", to = "mcfDimOperand", def = coerceLogicalOperand)
 setAs(from = "numeric", to = "mcfMetOperand", def = simpleCoerce)
 setAs(from = "character", to = "mcfMetOperand", def = simpleCoerceToNumeric)
 setAs(from = "character", to = "rtDimOperand", def = simpleCoerce)
-setAs(from = "numeric", to = "rtDimOperand", def = function(from, to){
-  as(as(from, "character"), to)
-})
+setAs(from = "numeric", to = "rtDimOperand", def = coerceViaChar)
 setAs(from = "logical", to = "rtDimOperand", def = coerceLogicalOperand)
 setAs(from = "numeric", to = "rtMetOperand", def = simpleCoerce)
 setAs(from = "character", to = "rtMetOperand", def = simpleCoerceToNumeric)
@@ -227,6 +226,8 @@ setAs(from = "numeric", to = ".operand", def = function(from){
   as(from, ".metOperand")
 })
 
+#############\/ Transform to method of Operand and Operand<- generic functions
+
 setAs(from = ".expr", to = ".operand",
   def = function(from, to) {
     from@operand
@@ -238,6 +239,8 @@ setAs(from = ".expr", to = ".operand",
     from
   })
 
+## As setAs looks within the global namespace for any internall called functions within
+# the definition, then the following function is likely to throw an error if used with setAs.
 compileOperand <- function(from) {
   unEscapedOperand <- as(as(from, ".operand"), "character")
   operator <- as(as(from, ".operator"), "character")
@@ -285,6 +288,7 @@ setAs(from = ".metOperand", to = "character",
   }
 )
 
+## the folowing function calls another function which is not in the global namesapce
 # Coercing GA expressions to GA API compatible character strings
 setAs(from = ".expr", to = "character", def = function(from, to) {
   paste0(
@@ -302,11 +306,7 @@ setAs(from = "orExpr", to = "character", def = function(from, to) {
 })
 
 setAs(from = "andExpr", to = "character", def = function(from, to) {
-  if(length(from) >= 1) {
-    do.call(paste, c(lapply(from, as, to), sep = ";"))
-  } else {
-    character(0)
-  }
+  do.call(paste, c(lapply(from, as, to), sep = ";"))
 })
 
 setAs(from = "gaNonSequenceCondition", to = "character", def = function(from) {
@@ -350,8 +350,8 @@ setAs(from = "gaSegmentCondition", to = "character", def = function(from, to) {
       do.call(
         paste,
         c(
-          lapply(from, FUN = function(dimOrMetCondition) {
-              as(dimOrMetCondition, to)
+          lapply(from, FUN = function(compoundExpr) {
+              as(compoundExpr, to)
           }),
           sep = ";"
         )
@@ -365,19 +365,15 @@ setAs(from = "gaSegmentCondition", to = "character", def = function(from, to) {
 
 setAs(from = "gaDynSegment", to = "character",
   def = function(from, to) {
-    if(length(from) >= 1) {
-      do.call(
-        paste,
-        c(
-          lapply(from, FUN = function(segmentCondition) {
-            as(segmentCondition, to)
-          }),
-          sep = ";"
-        )
+    do.call(
+      paste,
+      c(
+        lapply(from, FUN = function(segmentCondition) {
+          as(segmentCondition, to)
+        }),
+        sep = ";"
       )
-    } else {
-      character(0)
-    }
+    )
   }
 )
 
@@ -390,7 +386,7 @@ setAs(from = "gaSegmentId", to = "character",
   }
 )
 
-# Coercing from gaMetrics, gaDimensions, and gaSortBy to character
+# Coercing from .metrics, .dimensions, and .sortBy to character
 setAs(from = ".varList", to = "character",
   def = function(from) {
     paste(from@.Data, collapse = ",")
@@ -413,7 +409,8 @@ setAs(from = ".sortBy", to = "character",
   }
 )
 
-# Coercing to .gaExpr
+# Coercing to .expr
+# Need to redo this to properly handle escaping with the \ used with GA.
 setAs(from = "character", to = ".expr", def = function(from) {
   ops <- union(kGaOps$met, kGaOps$dim)
   ops <- str_replace_all(ops, "(\\[|\\])", "\\\\\\1")
@@ -436,17 +433,18 @@ setAs(from = "andExpr", to = "orExpr", def = function(from, to) {
     # if each expression within that gaOr shares the same dimension and the
     # expression operators and operands can be combined either as a match regex
     # or a match list.
-    
+
     # Check that all contained gaOr objects in the list have a length of 1
     assert_that(all(sapply(from, length) == 1) | length(from) == 1)
-    
+
     # Break apart the AND expression into OR expressions
     # then break apart each OR expression into single
     # expressions. Concatenate the single expressions
     # back up the chain. Then convert array into a list of
     # expressions to use for a new OR expression.
-    
-    new(to, as.list(do.call(c, do.call(c, from@.Data))))
+
+    orExpr <- as.list(do.call(c, do.call(c, from@.Data)))
+    as(orExpr, to)
   }
 )
 
@@ -454,12 +452,14 @@ setAs(from = "andExpr", to = "orExpr", def = function(from, to) {
 setAs(from = "orExpr", to = "andExpr", def = simpleCoerceToList)
 
 setAs(from = ".expr", to = "andExpr", def = function(from, to) {
-  new(to, list(
-    as(from, "orExpr")
-  ))
+  as(as(from, "orExpr"), "andExpr")
 })
 
 # Coercion to .filter subclasses
+
+# Consider having coercision just to .tableFilter where coercion requires
+# call to initialise where the object is coerced to a specific type of .tableFilter
+# class, i.e GA, RT or MCF subclasses.
 
 setAs(from = "andExpr", to = ".tableFilter", def = function(from) {
   if(all_inherit(unlist(from), ".gaExpr")) {
@@ -481,21 +481,19 @@ setAs(from = "andExpr", to = "gaFilter", def = simpleCoerce)
 setAs(from = "andExpr", to = "mcfFilter", def = simpleCoerce)
 setAs(from = "andExpr", to = "rtFilter", def = simpleCoerce)
 
-coerceToAndFirst <- function(from, to) {
-  as(as(from, "andExpr"), to)
-}
+setAs(from = "orExpr", to = "gaFilter", def = coerceViaAnd)
+setAs(from = "orExpr", to = "mcfFilter", def = coerceViaAnd)
+setAs(from = "orExpr", to = "rtFilter", def = coerceViaAnd)
+setAs(from = "orExpr", to = ".tableFilter", def = coerceViaAnd)
 
-setAs(from = "orExpr", to = "gaFilter", def = coerceToAndFirst)
-setAs(from = "orExpr", to = "mcfFilter", def = coerceToAndFirst)
-setAs(from = "orExpr", to = "rtFilter", def = coerceToAndFirst)
-setAs(from = "orExpr", to = ".tableFilter", def = coerceToAndFirst)
-setAs(from = ".expr", to = "gaFilter", def = coerceToAndFirst)
-setAs(from = ".expr", to = "mcfFilter", def = coerceToAndFirst)
-setAs(from = ".expr", to = "rtFilter", def = coerceToAndFirst)
-setAs(from = ".expr", to = ".tableFilter", def = coerceToAndFirst)
+setAs(from = ".expr", to = "gaFilter", def = coerceViaAnd)
+setAs(from = ".expr", to = "mcfFilter", def = coerceViaAnd)
+setAs(from = ".expr", to = "rtFilter", def = coerceViaAnd)
+setAs(from = ".expr", to = ".tableFilter", def = coerceViaAnd)
 
-setAs(from = "gaDynSegment", to = "gaFilter", def = simpleCoerceData)
-setAs(from = "gaDynSegment", to = ".tableFilter", def = simpleCoerceData)
+setAs(from = "gaDimensionOrMetricCondition", to = ".tableFilter", def = simpleCoerceData)
+
+#############\/ Transform to method of TableFilter and TableFilter<- generic functions
 
 setAs(from = ".query", to = ".tableFilter",
   def = function(from, to){
@@ -509,10 +507,11 @@ setAs(from = ".query", to = ".tableFilter",
   }
 )
 
+### Review the following coercions using "new"
 # Coercion to custom segment classes
 
 setAs(from = ".compoundExpr", to = "gaSequenceCondition", def = function(from, to) {
-  new(to, as("andExpr", from))
+  new(to, as(from, "andExpr"))
 })
 
 # Coercing to gaNonSequenceCondition
@@ -522,7 +521,7 @@ setAs(from = ".compoundExpr", to = "gaNonSequenceCondition", def = function(from
 
 # Coercing to gaSegmentCondition
 setAs(from = ".compoundExpr", to = "gaSegmentCondition", def = function(from, to) {
-  new(to, list(as("gaNonSequenceCondition", from)))
+  new(to, list(as(from, "gaNonSequenceCondition")))
 })
 
 # Coercion to gaSegmentId
@@ -545,6 +544,7 @@ setAs(from = "orExpr", to = "gaDynSegment", def = function(from, to) {
   as(as(from, "andExpr"), to)
 })
 
+#Review this coercion method
 setAs(from = "andExpr", to = "gaDynSegment", def = function(from, to) {
   new(to, list(GaSegmentCondition(GaNonSequenceCondition(from))))
 })
@@ -572,6 +572,7 @@ setAs(
   }
 )
 
+#############\/ Transform to method of Segment and Segment<- generic functions
 setAs(from = "gaQuery", to = ".gaSegment",
   def = function(from) {
     from@segment
@@ -624,6 +625,7 @@ updateSortBy <- function(object) {
   object
 }
 
+#############\/ Transform to method of Dimensions and Dimensions<- generic functions
 setAs(from = ".query", to = ".dimensions",
   def = function(from, to) {
     from@dimensions
@@ -652,6 +654,7 @@ setAs(from = "list", to = ".metrics", def = function(from) {
   }
 })
 
+#############\/ Transform to method of Metrics and Metrics<- generic functions
 setAs(from = ".query", to = ".metrics",
   def = function(from, to) {
     from@metrics
@@ -680,6 +683,7 @@ setAs(from = "list", to = ".sortBy", def = function(from) {
   }
 })
 
+#############\/ Transform to method of SortBy and SortBy<- generic functions
 setAs(from = ".query", to = ".sortBy",
   def = function(from, to) {
     from@sortBy
@@ -827,6 +831,8 @@ setAs(from = "character", to = "rtSortBy", def = function(from, to) {
 # Coercion to viewId
 setAs(from = "numeric", to = "viewId", def = simpleCoerceData)
 setAs(from = "character", to = "viewId", def = simpleCoerceData)
+
+#######\/ Consider changing to generic methods View and View<- rather than coercion
 setAs(from = ".query", to = "viewId",
   def = function(from, to) {
     from@viewId
@@ -847,16 +853,22 @@ setAs(from = "gaView", to = "viewId",
   }
 )
 
+#######\/ Consider changing to generic methods rather than coercion
 # Select the default view of the property
 setAs(from = "gaProperty", to = "viewId",
   def = function(from, to) {
-    as(from$defaultView, "viewId")
+    defaultView <- from$defaultView
+    if (length(defaultView) == 0) {
+      defaultView <- from$views$entities[[1]]
+    }
+    as(defaultView, "viewId")
   },
   replace = function(from, value) {
     as(from$defaultView, "viewId") <- as(value, "viewId")
   }
 )
 
+#######\/ Consider changing to generic methods rather than coercion
 # Sselect the first property of the account, which is then
 # used to select a view (as above).
 setAs(from = "gaAccount", to = "viewId",
@@ -867,6 +879,8 @@ setAs(from = "gaAccount", to = "viewId",
     as(from$properties$entities[[1]], "viewId") <- as(value, "viewId")
   }
 )
+
+#############\/ Transform to method of DateRange and DateRange<- generic functions
 
 # Coercion to dateRange
 setAs(from = ".query", to = "dateRange",

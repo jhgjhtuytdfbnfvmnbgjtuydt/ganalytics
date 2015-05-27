@@ -2,11 +2,21 @@
 % Please edit documentation in R/all-generics.R
 \name{GaImmediatelyPrecedes}
 \alias{GaImmediatelyPrecedes}
-\title{GaImmediatelyPrecedes}
+\title{GaImmediatelyPrecedes.}
 \usage{
-GaImmediatelyPrecedes(.Object, ...)
+GaImmediatelyPrecedes(object, ...)
+}
+\arguments{
+\item{object}{The expression that should \bold{immediately} preceed others in
+the sequence.}
+
+\item{...}{Any other expressions that should \bold{immediately} follow the
+  first one but before any others in the sequence.}
 }
 \description{
 Create a gaSequenceStep object
+}
+\seealso{
+GaSequenceCondition
 }
 

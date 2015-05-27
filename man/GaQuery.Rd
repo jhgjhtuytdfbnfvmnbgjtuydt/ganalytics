@@ -2,8 +2,7 @@
 % Please edit documentation in R/Query.R
 \name{GaQuery}
 \alias{GaQuery}
-\title{GaQuery
-Create a ganalytics query object}
+\title{GaQuery.}
 \usage{
 GaQuery(view = NA, creds = GoogleApiCreds(), startDate = Sys.Date() - 8,
   endDate = Sys.Date() - 1, metrics = "ga:sessions",
@@ -11,6 +10,8 @@ GaQuery(view = NA, creds = GoogleApiCreds(), startDate = Sys.Date() - 8,
   samplingLevel = "DEFAULT", maxResults = kGaMaxResults, profileId = NA)
 }
 \arguments{
+\item{view}{view id to use}
+
 \item{creds}{authentication credentials object created using GoogleApiCreds()}
 
 \item{startDate}{start date}
@@ -29,13 +30,12 @@ GaQuery(view = NA, creds = GoogleApiCreds(), startDate = Sys.Date() - 8,
 
 \item{samplingLevel}{either "DEFAULT", "HIGHER_PRECISION" or "FASTER"}
 
-\item{maxResults}{the maximum number of results to return,
-up to 1,000,000}
+\item{maxResults}{the maximum number of results to return,}
 
-\item{viewId}{profile id to use}
+\item{profileId}{Deprecated, use view instead.
+ up to 1,000,000}
 }
 \description{
-GaQuery
 Create a ganalytics query object
 }
 

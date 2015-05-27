@@ -8,31 +8,34 @@ NULL
 
 # -- GaSortBy ----
 
+#' @describeIn SortBy
 setMethod(
   f = "SortBy",
   signature = ".varList",
-  definition = function(.Object, desc = logical(0)) {
-    vars <- as(.Object, ".sortBy")
+  definition = function(object, desc = logical(0)) {
+    vars <- as(object, ".sortBy")
     vars@desc <- desc
     validObject(vars)
     vars
   }
 )
 
-setMethod("SortBy", "NULL", function(.Object) {new(".sortBy")})
+#' @describeIn SortBy
+setMethod("SortBy", "NULL", function(object) {new(".sortBy")})
 
+#' @describeIn SortBy
 setMethod(
   f = "SortBy",
   signature = "character",
-  definition = function(.Object, ..., desc = logical(0)) {
-    varsChar <- sapply(ArgList(.Object, ...), as.character)
+  definition = function(object, ..., desc = logical(0)) {
+    varsChar <- sapply(ArgList(object, ...), as.character)
     vars <- as(varsChar, ".sortBy")
     # For any var prefixed with "-", remove the prefix and set the desc flag to TRUE
     # For any var prefixed with "+", remove the prefix and set the desc flag to FALSE
     desc[grep("^\\+", varsChar)] <- FALSE
     desc[grep("^\\-", varsChar)] <- TRUE
     # Set the length of the desc flags to the same length as the vector of GA variables to sort by.
-    if(!is.null(vars)) { 
+    if(!is.null(vars)) {
       length(desc) <- length(vars)
     }
     desc[is.na(desc)] <- vars@desc[is.na(desc)]
@@ -45,43 +48,48 @@ setMethod(
   }
 )
 
+#' @describeIn SortBy
 setMethod(
   f = "SortBy",
   signature = "list",
-  definition = function(.Object, ..., desc = logical(0)) {
-    SortBy(as(ArgList(.Object, ...), ".sortBy"), desc = desc)
+  definition = function(object, ..., desc = logical(0)) {
+    SortBy(as(ArgList(object, ...), ".sortBy"), desc = desc)
   }
 )
 
+#' @describeIn SortBy
 setMethod(
   f = "SortBy",
   signature = c(".query", "ANY"),
-  definition = function(.Object, value) {
+  definition = function(object, value) {
     if (missing(value)) {
-      as(.Object, ".sortBy")
+      as(object, ".sortBy")
     } else {
       if(length(value) < 1) {
         value <- NULL
       }
-      as(.Object, ".sortBy") <- value
-      .Object
+      as(object, ".sortBy") <- value
+      object
     }
   }
 )
 
+#' @describeIn SortBy
 setMethod(
   f = "SortBy<-",
   signature = c(".query", "ANY"),
-  definition = function(.Object, value) {
-    as(.Object, ".sortBy") <- value
-    .Object
+  definition = function(object, value) {
+    as(object, ".sortBy") <- value
+    object
   }
 )
 
 # Backwards compatibility
 
-#'@export GaSortBy
+#' @rdname SortBy
+#' @export GaSortBy
 GaSortBy <- SortBy
 
-#'@export GaSortBy<-
+#' @rdname SortBy
+#' @export GaSortBy<-
 `GaSortBy<-` <- `SortBy<-`

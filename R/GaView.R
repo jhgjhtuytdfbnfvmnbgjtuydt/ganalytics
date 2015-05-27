@@ -6,26 +6,42 @@
 NULL
 
 # -- GaView ----
+#' @describeIn GaView
+setMethod("GaView", "viewId", function(object) {object})
 
-setMethod("GaView", "viewId", function(.Object) {.Object})
-setMethod("GaView", "gaView", function(.Object) {as(.Object, "viewId")})
-setMethod("GaView", "gaProperty", function(.Object) {as(.Object, "viewId")})
-setMethod("GaView", "gaAccount", function(.Object) {as(.Object, "viewId")})
-setMethod("GaView", "character", function(.Object) {as(.Object, "viewId")})
-setMethod("GaView", "numeric", function(.Object) {as(.Object, "viewId")})
-setMethod("GaView", ".query", function(.Object) {as(.Object, "viewId")})
+#' @describeIn GaView
+setMethod("GaView", "gaView", function(object) {as(object, "viewId")})
 
+#' @describeIn GaView
+setMethod("GaView", "gaProperty", function(object) {as(object, "viewId")})
+
+#' @describeIn GaView
+setMethod("GaView", "gaAccount", function(object) {as(object, "viewId")})
+
+#' @describeIn GaView
+setMethod("GaView", "character", function(object) {as(object, "viewId")})
+
+#' @describeIn GaView
+setMethod("GaView", "numeric", function(object) {as(object, "viewId")})
+
+#' @describeIn GaView
+setMethod("GaView", ".query", function(object) {as(object, "viewId")})
+
+#' @describeIn GaView
 setMethod(
   f = "GaView<-",
   signature = c(".query", "ANY"),
-  definition = function(.Object, value) {
-    as(.Object, "viewId") <- value
-    .Object
+  definition = function(object, value) {
+    as(object, "viewId") <- value
+    object
   }
 )
 
 # Backwards compatibility
-#'@export GaProfileId
+#' @rdname GaView
+#' @export GaProfileId
 GaProfileId <- GaView
-#'@export GaProfileId<-
+
+#' @rdname GaView
+#' @export GaProfileId<-
 `GaProfileId<-` <- `GaView<-`
