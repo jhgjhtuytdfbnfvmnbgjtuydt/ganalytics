@@ -1,8 +1,12 @@
+#' @include meta.R
+NULL
+
 ga_scopes <- c(
   default = "https://www.googleapis.com/auth/analytics",
   edit = "https://www.googleapis.com/auth/analytics.edit",
   read_only = "https://www.googleapis.com/auth/analytics.readonly",
-  manage_users = "https://www.googleapis.com/auth/analytics.manage.users"
+  manage_users = "https://www.googleapis.com/auth/analytics.manage.users",
+  read_only_users = "https://www.googleapis.com/auth/analytics.manage.users.readonly"
 )
 
 gtm_scopes <- c(
@@ -98,7 +102,7 @@ kGaDateOutFormat <- "%Y%m%d"
 # The earliest valid date is 20050101. There is no upper limit restriction for a start-date.
 kGaDateOrigin <- as.Date("2005-01-01")
 
-# Google Analytics expression operators
+# Google Analytics expression comparators
 kGaOps <- list(
   met = c("==", "!=", "<", ">", "<=", ">=", "<>"),
   dim = c("==", "!=", "=~", "!~", "=@", "!@", "<>", "[]")
@@ -116,11 +120,12 @@ kRtOps <- list(
 
 # ganalytics tolerated dimension and metric prefixes
 kPrefixDelim <- paste0("[", paste0(c(
-  ";", "\\-", "\\.", "_"),
+  ":", ";", "\\-", "\\.", "_"),
 collapse = ""), "]")
 kGaPrefix <- paste0("^ga", kPrefixDelim)
 kMcfPrefix <- paste0("^mcf", kPrefixDelim)
 kRtPrefix <- paste0("^rt", kPrefixDelim)
+kAnyPrefix <- paste0("^(ga|mcf|rt)", kPrefixDelim)
 
 # Maximum dimensions and metrics allowed by Google Analytics Core Reporting API
 kGaMax <- list(
@@ -176,9 +181,10 @@ filter_field_levels <- c(
   "GEO_COUNTRY", "GEO_REGION", "GEO_CITY",
   "EVENT_CATEGORY", "EVENT_ACTION", "EVENT_LABEL",
   "CUSTOM_FIELD_1", "CUSTOM_FIELD_2", "USER_DEFINED_VALUE",
+  "CUSTOM_DIMENSIONS",
   "APP_ID", "APP_INSTALLER_ID", "APP_NAME", "APP_VERSION", "SCREEN",
   "IS_APP", "IS_FATAL_EXCEPTION", "EXCEPTION_DESCRIPTION",
-  "IS_MOBILE", "IS_TABLET",
+  "DEVICE_CATEGORY",
   "MOBILE_HAS_QWERTY_KEYBOARD", "MOBILE_HAS_NFC_SUPPORT",
   "MOBILE_HAS_CELLULAR_RADIO", "MOBILE_HAS_WIFI_SUPPORT",
   "MOBILE_BRAND_NAME", "MOBILE_MODEL_NAME",
@@ -194,3 +200,10 @@ user_segment_type_levels <- c(
   "BUILT_IN", "CUSTOM"
 )
 
+metadata_path <- get_metadata_path()
+if (nchar(metadata_path) == 0) {
+  GaMetaUpdate()
+  metadata_path <- get_metadata_path()
+}
+assert_that(file.exists(metadata_path))
+load(metadata_path)

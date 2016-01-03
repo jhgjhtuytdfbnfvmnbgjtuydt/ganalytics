@@ -1,4 +1,28 @@
-#' Google APIs OAuth 2.0 Credentials
+#' @import httpuv
+#' @importFrom jsonlite fromJSON toJSON
+#' @importFrom httr GET POST PUT DELETE oauth_endpoints oauth1.0_token oauth2.0_token config
+#'   stop_for_status content oauth_app modify_url add_headers
+#' @importFrom R6 R6Class
+#' @importFrom stringr str_c str_pad str_detect
+#' @importFrom selectr querySelector querySelectorAll
+#' @importFrom XML xmlParse xmlToList xmlApply
+#' @importFrom plyr laply aaply
+NULL
+
+# This will be initialised using GoogleApiCreds() at time of package being loaded.
+google_api <- new.env()
+
+set_creds <- function(new_creds = list()) {
+  assign("creds", new_creds, google_api)
+}
+
+set_creds()
+
+get_creds <- function() {
+  get("creds", google_api)
+}
+
+#' Google APIs OAuth 2.0 Credentials.
 #'
 #' Create a Google APIs OAuth2.0 credentials object
 #'
@@ -9,17 +33,19 @@
 #' @param appname prefix of environment variables that hold the client ID and client secret.
 #'
 #' @export
-#' @include ganalytics-package.R
 GoogleApiCreds <- function(
-  userName = character(0),
+  userName = Sys.getenv(paste0(appname, "_USER")),
   appCreds = NULL,
   cache = character(0),
   use_oob = FALSE,
   appname = "GOOGLE_APIS"
 ){
-  cache_generic_file_name <- paste0(tolower(appname), "_auth.RDS")
+  if (userName == "") {
+    userName <- character(0)
+  }
+  cache_generic_file_name <- paste(tolower(appname), "auth.RDS", sep = "_")
   cache_file_prefix <- "."
-  cache_default_dir <- "~"
+  cache_default_dir <- "~" # Consider changing to tempdir() and/or make a global option (see httr options).
   if (length(cache) == 0) {
     if (length(userName) == 0) {
       cache <- cache_generic_file_name
@@ -39,18 +65,20 @@ GoogleApiCreds <- function(
     ),
     use_oob = use_oob
   )
+  set_creds(creds)
+  creds
 }
 
 app_oauth_creds <- function(appname, creds = NULL) {
   if (typeof(creds) == "character" & length(creds) == 1) {
-    if(validate(creds)) {
+    if (jsonlite::validate(creds)) {
       creds <- fromJSON(creds)
     } else if (file.exists(creds)) {
       creds <- fromJSON(creds)
     } else {
       creds <- NULL
     }
-    if("installed" %in% names(creds)) {
+    if ("installed" %in% names(creds)) {
       creds <- creds$installed
     }
   }
@@ -80,6 +108,35 @@ app_oauth_creds <- function(appname, creds = NULL) {
     appname = appname,
     key = creds$client_id,
     secret = creds$client_secret
+  )
+}
+
+invisible(GoogleApiCreds())
+
+# API Error response codes: https://developers.google.com/analytics/devguides/config/mgmt/v3/errors
+
+#Make a Goolge API request
+ga_api_request <- function(
+  creds,
+  request,
+  scope = ga_scopes["read_only"],
+  base_url = "https://www.googleapis.com/analytics/v3",
+  req_type = "GET",
+  body_list = NULL,
+  fields = NULL,
+  queries = NULL,
+  max_results = NULL
+) {
+  stopifnot(scope %in% ga_scopes)
+  google_api_request(
+    creds = creds,
+    scope = scope,
+    request = request,
+    base_url = base_url,
+    queries = queries,
+    req_type = req_type,
+    body_list = body_list,
+    fields = fields
   )
 }
 
@@ -119,14 +176,14 @@ api_request <- function(api_name, app, base_url,
   )
   url <- form_url(base_url, queries)
   endpoint <- oauth_endpoints(name = api_name)
-  if(length(user$login) != 1) {user$login <- NA}
-  if(!is.na(user$login)) {
+  if (length(user$login) != 1) {user$login <- NA}
+  if (!is.na(user$login)) {
     endpoint$authorize <- modify_url(
       endpoint$authorize,
       query = list(login_hint = user$login)
     )
   }
-  scope <- if(!is.null(scope)) {
+  scope <- if (!is.null(scope)) {
     paste(scope, collapse = " ")
   }
   switch(
@@ -154,7 +211,7 @@ api_request <- function(api_name, app, base_url,
     url = url,
     config = config(token = token)
   )
-  if(!is.null(body_list)) {
+  if (!is.null(body_list)) {
     body <- toJSON(
       body_list,
       pretty = TRUE#, asIs = TRUE #, auto_unbox = TRUE
@@ -189,7 +246,7 @@ form_url <- function(base_url, queries = NULL) {
   paste(
     c(
       base_url,
-      if(length(queries) >= 1) {
+      if (length(queries) >= 1) {
         paste(
           aaply(seq_along(queries), 1, function(query_index){
             query <- queries[query_index]
@@ -219,9 +276,9 @@ response_to_list <- function(response) {
       })
       ret_list <- ret_list[[1]]
       ret_list <- c(
-        ret_list[names(ret_list)!="entry"],
+        ret_list[names(ret_list) != "entry"],
         entries = list(
-          ret_list[names(ret_list)=="entry"]
+          ret_list[names(ret_list) == "entry"]
         )
       )
       return(ret_list)
@@ -248,7 +305,7 @@ response_to_list <- function(response) {
 parse_field_list <- function(field_list) {
   # A list must be provided, and as this function is recursive,
   # all elements within that list must also be lists, and so on.
-  if(length(field_list) == 0) {
+  if (length(field_list) == 0) {
     return(NULL)
   }
   stopifnot(
@@ -269,7 +326,7 @@ parse_field_list <- function(field_list) {
       # otherwise recursively parse each of its sub elements
       sub_fields <- parse_field_list(field_content)
       # if there was more than one sub element, then group those sub elements
-      if(field_length > 1) {
+      if (field_length > 1) {
         sub_fields <- paste0("(", sub_fields, ")")
       }
       # the sub fields are returned with a preceeding "/"
@@ -282,229 +339,3 @@ parse_field_list <- function(field_list) {
   parsed_fields <- paste0(fields, collapse = ",")
   return(parsed_fields)
 }
-
-get_privates <- function(class_gen){
-  with(class_gen, c(private_fields, private_methods))
-}
-
-.googleApi <- R6Class(
-  ".googleApi",
-  public = list(
-    creds = GoogleApiCreds(),
-    get = function(max_results = NULL) {
-      req_type <- "GET"
-      private$api_req_func(
-        creds = self$creds,
-        request = self$.req_path,
-        scope = private$scope,
-        base_url = private$base_url,
-        req_type = req_type,
-        max_results = max_results
-      )
-    },
-    initialize = function(creds = GoogleApiCreds()) {
-      self$creds = creds
-    }
-  ),
-  active = list(
-    .req_path = function(){}
-  ),
-  private = list(
-    request = NULL,
-    scope = NULL,
-    parent_class_name = "NULL",
-    resource_name = NULL,
-    base_url = NULL,
-    api_req_func = google_api_request,
-    field_corrections = function(field_list) {
-      if(is.data.frame(field_list)) {
-        if(exists("created", field_list)) {
-          field_list$created <- ymd_hms(field_list$created)
-        }
-        if(exists("updated", field_list)) {
-          field_list$updated <- ymd_hms(field_list$updated)
-        }
-      }
-      field_list[!(names(field_list) %in% c("kind", "selfLink", "childLink", "parentLink"))]
-    }
-  )
-)
-
-.googleApiResource <- R6Class(
-  ".googleApiResource",
-  inherit = .googleApi,
-  public = list(
-    id = NA,
-    name = NA,
-    created = NA,
-    updated = NA,
-    parent = NULL,
-    modify = function(field_list) {
-      l_ply(names(field_list), function(field_name) {
-        if (exists(field_name, self)) {
-          self[[field_name]] <- field_list[[field_name]]
-        }
-      })
-      self
-    },
-    initialize = function(creds = GoogleApiCreds(), parent = NULL, id = NA) {
-      super$initialize(creds = creds)
-      stopifnot(is(parent, private$parent_class_name) | is(parent, "NULL"))
-      self$parent <- parent
-      self$id <- id
-      if(!is.na(id)) {
-        self$get()
-      }
-      self
-    },
-    get = function() {
-      if (!is.null(self$.req_path)) {
-        response <- super$get()
-        updated_fields <- private$field_corrections(response)
-        self$modify(updated_fields)
-      }
-      self
-    },
-    UPDATE = function(scope = private$write_scope) {
-      entity_body_list <- self$api_list
-      private$api_req_func(
-        creds = self$creds,
-        request = self$.req_path,
-        scope = scope,
-        base_url = private$base_url,
-        req_type = "PUT",
-        body_list = entity_body_list
-      )
-      self$get()
-    },
-    .child_nodes = function(class_generator) {
-      class_name <- class_generator$classname
-      if (is(private$cache[[class_name]], class_name)) {
-        private$cache[[class_name]]
-      } else {
-        private$cache[[class_name]] <- class_generator$new(parent = self, creds = self$creds)
-      }
-    }
-  ),
-  active = list(
-    .req_path = function() {
-      if (is.na(self$id)) {
-        NULL
-      } else {
-        c(self$parent$.req_path, private$request, URLencode(self$id, reserved = TRUE))
-      }
-    },
-    api_list = function() {
-      list(
-        id = self$id,
-        name = self$name
-      )
-    }
-  ),
-  private = list(
-    cache = list()
-  )
-)
-
-.googleApiCollection <- R6Class(
-  ".googleApiCollection",
-  inherit = .googleApi,
-  public = list(
-    summary = data.frame(),
-    parent = NULL,
-    get_entity = function(id) {
-      stopifnot(id %in% self$summary$id)
-      entity <- private$entity_class$new(parent = self$parent, id = id, creds = self$creds)
-      private$entities_cache[[id]] <- entity
-      entity
-    },
-    get = function() {
-      if (!is.null(self$.req_path)) {
-        response <- super$get()
-        self$summary <- private$field_corrections(response[[private$collection_name]])
-      }
-      self
-    },
-    INSERT = function(entity, scope = private$write_scope) {
-      stopifnot(is(entity, private$entity_class$classname))
-      entity_body_list <- entity$api_list
-      private$api_req_func(
-        creds = self$creds,
-        request = self$.req_path,
-        scope = scope,
-        base_url = private$base_url,
-        req_type = "POST",
-        body_list = entity_body_list
-      )
-      self$get()
-    },
-    DELETE = function(id, scope = private$write_scope) {
-      entity <- self$get_entity(id)
-      private$api_req_func(
-        creds = entity$creds,
-        request = entity$.req_path,
-        scope = scope,
-        base_url = private$base_url,
-        req_type = "DELETE",
-      )
-      self$get()
-    },
-    initialize = function(creds = GoogleApiCreds(), parent = NULL) {
-      super$initialize(creds = creds)
-      entity_class_private <- get_privates(private$entity_class)
-      private$request <- entity_class_private$request
-      private$parent_class_name <- entity_class_private$parent_class_name
-      stopifnot(is(parent, private$parent_class_name) | is.null(parent))
-      if(is.null(private$collection_name)) {
-        private$collection_name <- private$request
-      }
-      private$resource_name <- entity_class_private$resource_name
-      self$parent <- parent
-      self$get()
-    }
-  ),
-  active = list(
-    entities = function() {
-      if (is.data.frame(self$summary)) {
-        ret <- alply(self$summary, 1, function(summary_row) {
-          field_list <- as.list(summary_row)
-          updated <- summary_row$updated
-          id <- field_list$id
-          entity <- private$entities_cache[[id]]
-          if (
-            !is(entity, private$entity_class$classname) |
-              !identical(entity$updated, updated)
-          ) {
-            entity <- private$entity_class$new(parent = self$parent, creds = self$creds)
-            entity$modify(field_list = field_list)
-            private$entities_cache[[id]] <- entity
-          }
-          entity
-        })
-        attributes(ret) <- NULL
-        names(ret) <- self$summary$id
-        ret
-      } else {
-        NULL
-      }
-    },
-    .req_path = function() {
-      # if this is top most level, e.g. 'Accounts' or "UserSegments", then there
-      # is no parent and therefore there will not exist a parent request path,
-      # i.e. it will be NULL. Otherwise, if there is a parent, but it has no
-      # request path, then this should also not have a request path.
-      if (!is.null(self$parent) & is.null(self$parent$.req_path)) {
-        NULL
-      } else if (is(self$parent, private$parent_class_name)) {
-        c(self$parent$.req_path, private$request)
-      } else {
-        NULL
-      }
-    }
-  ),
-  private = list(
-    entity_class = .googleApiResource,
-    entities_cache = list(),
-    collection_name = "items"
-  )
-)

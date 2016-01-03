@@ -1,12 +1,10 @@
-#' @include all-coercions.R
-#' @include all-classes.R
-#' @include init-methods.R
-#' @include all-generics.R
-#' @include helper-functions.R
+#' @include query-classes.R
+#' @include Query-generics.R
 #' @include GaApiRequest.R
+#' @importFrom plyr llply
 NULL
 
-GaPaginate <- function(query, maxRequestedRows, creds, queryClass = "gaQuery") {
+GaPaginate <- function(query, maxRequestedRows, creds, queryClass = "gaQuery", segmentName = NULL) {
   # Get the first page to determine the total number of rows available.
   gaPage <- GaGetCoreReport(
     query = query,
@@ -19,15 +17,15 @@ GaPaginate <- function(query, maxRequestedRows, creds, queryClass = "gaQuery") {
   viewId <- gaPage$viewId
   # Is GA reporting sampled data?
   sampled <- gaPage$sampled
-  sampleSize = gaPage$sampleSize
-  sampleSpace = gaPage$sampleSpace
+  sampleSize <- gaPage$sampleSize
+  sampleSpace <- gaPage$sampleSpace
   # How many rows do I need in total?
   maxRows <- min(gaPage$totalResults, maxRequestedRows)
   # How many pages would that be?
   totalPages <- ceiling(maxRows / kGaMaxResults)
-  if(totalPages > 1) {
+  if (totalPages > 1) {
     # Step through each of the pages
-    for(page in 2:totalPages) {
+    for (page in 2:totalPages) {
       message(paste0("Fetching page ", page, " of ", totalPages, "..."))
       # What row am I up to?
       startIndex <- kGaMaxResults * (page - 1) + 1
@@ -52,7 +50,8 @@ GaPaginate <- function(query, maxRequestedRows, creds, queryClass = "gaQuery") {
       sampled = sampled,
       viewId = viewId,
       sampleSize = sampleSize,
-      sampleSpace = sampleSpace
+      sampleSpace = sampleSpace,
+      segmentName = segmentName
     )
   )
 }
@@ -83,8 +82,8 @@ GaGetCoreReport <- function(query, creds, startIndex = 1, maxResults = 10000, qu
 
 YesNoToLogical <- function(char) {
   if (length(char) > 0) {
-    char[char=="Yes"] <- "TRUE"
-    char[char=="No"] <- "FALSE"
+    char[char == "Yes"] <- "TRUE"
+    char[char == "No"] <- "FALSE"
   }
   char <- as.logical(char)
   return(char)
@@ -95,7 +94,7 @@ YesNoToLogical <- function(char) {
 #
 ColTypes <- function(df, colNames, asFun, ...) {
   cols <- tolower(names(df)) %in% tolower(colNames)
-  if(TRUE %in% cols) df[cols] <- lapply(X = df[cols], FUN = asFun, ...)
+  if (TRUE %in% cols) df[cols] <- lapply(X = df[cols], FUN = asFun, ...)
   return(df)
 }
 
@@ -107,7 +106,7 @@ FactorInt <- function(x) {
 
 GaListToDataframe <- function(gaData, queryClass) {
   if (gaData$totalResults > 0) {
-    if(queryClass == "mcfQuery") {
+    if (queryClass == "mcfQuery") {
       gaData$rows <- llply(gaData$rows, function(row) {
         primitiveValues <- which(!is.na(row[['primitiveValue']]))
         conversionPathValues <- which(!is.null(row[['conversionPathValue']]))
@@ -135,8 +134,8 @@ GaListToDataframe <- function(gaData, queryClass) {
     gaData$rows <- ColTypes(df = gaData$rows, colNames = names(charCols)[charCols], asFun = factor)
   } else {
     cols <- as.list(gaData$columnHeaders$name)
-    names(cols) <- cols
-    gaData$rows <- data.frame(cols, stringsAsFactors = FALSE)[0,]
+    names(cols) <- as.character(cols)
+    gaData$rows <- data.frame(cols, stringsAsFactors = FALSE)[0, , drop = FALSE]
     names(gaData$rows) <- gaData$columnHeaders$name
   }
   names(gaData$rows) <- sub("^(ga|rt|mcf)[:\\.]", "", names(gaData$rows))
